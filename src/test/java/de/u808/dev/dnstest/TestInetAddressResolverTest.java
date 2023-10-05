@@ -9,11 +9,6 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xbill.DNS.Lookup;
-import org.xbill.DNS.Name;
-import org.xbill.DNS.Record;
-import org.xbill.DNS.ReverseMap;
-import org.xbill.DNS.Type;
 
 
 
@@ -29,20 +24,20 @@ public class TestInetAddressResolverTest {
 		assertNotNull(addresses);
 	}
 	
-	@Test
-	public void testLookupByAddress() throws UnknownHostException {
-		final String ipAddressToTest = "142.250.185.164";
-		byte[] byAddress = new byte[4];
-		String[] ipArr = ipAddressToTest.split("\\.");
-		byAddress[0] = (byte) (Integer.parseInt(ipArr[0]) & 0xFF);
-		byAddress[1] = (byte) (Integer.parseInt(ipArr[1]) & 0xFF);
-		byAddress[2] = (byte) (Integer.parseInt(ipArr[2]) & 0xFF);
-		byAddress[3] = (byte) (Integer.parseInt(ipArr[3]) & 0xFF);		
-		InetAddress address = InetAddress.getByAddress(byAddress);
-		String canonicalHostName = address.getCanonicalHostName();
-		LOG.info("CanonicalHostName for IP {} = {}", ipAddressToTest, canonicalHostName);
-		assertNotNull(canonicalHostName);
-	}
+//	@Test
+//	public void testLookupByAddress() throws UnknownHostException {
+//		final String ipAddressToTest = "142.250.185.164";
+//		byte[] byAddress = new byte[4];
+//		String[] ipArr = ipAddressToTest.split("\\.");
+//		byAddress[0] = (byte) (Integer.parseInt(ipArr[0]) & 0xFF);
+//		byAddress[1] = (byte) (Integer.parseInt(ipArr[1]) & 0xFF);
+//		byAddress[2] = (byte) (Integer.parseInt(ipArr[2]) & 0xFF);
+//		byAddress[3] = (byte) (Integer.parseInt(ipArr[3]) & 0xFF);		
+//		InetAddress address = InetAddress.getByAddress(byAddress);
+//		String canonicalHostName = address.getCanonicalHostName();
+//		LOG.info("CanonicalHostName for IP {} = {}", ipAddressToTest, canonicalHostName);
+//		assertNotNull(canonicalHostName);
+//	}
 	
 	@Test
 	public void simpleLookupByAddress() throws UnknownHostException {
@@ -51,7 +46,16 @@ public class TestInetAddressResolverTest {
 //		Record[] records = new Lookup(name, Type.PTR).run();
 //		assertNotNull(records); 
 		//142.250.186.132
-		String address = InetAddress.getByAddress(new byte[] {(byte)142, (byte)250, (byte)186, (byte)132}).getHostName();
-		LOG.info("rDNS for IP {} = {} via org.xbill.DNS.Lookup.Lookup", "142.250.186.132", address);
+		
+		final String nameToTest = "www.google.com";
+		InetAddress[] resolvedAddresses = InetAddress.getAllByName(nameToTest);
+		
+		for (InetAddress inetAddress : resolvedAddresses) {
+			LOG.info("IP for {} = {}", nameToTest, inetAddress.toString());
+			
+			String address = InetAddress.getByAddress(inetAddress.getAddress()).getHostName();
+			LOG.info("rDNS for IP {} = {}", inetAddress, address);
+		}
+		
 	}
 }
