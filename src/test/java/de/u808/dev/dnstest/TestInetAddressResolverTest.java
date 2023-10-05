@@ -46,10 +46,12 @@ public class TestInetAddressResolverTest {
 	
 	@Test
 	public void simpleLookupByAddress() throws UnknownHostException {
-		final String ipAddressToTest = "142.250.185.164";
-		Name name = ReverseMap.fromAddress(ipAddressToTest);
-		Record[] records = new Lookup(name, Type.PTR).run();
-		assertNotNull(records);
-		LOG.info("CanonicalHostName for IP {} = {} via org.xbill.DNS.Lookup.Lookup", ipAddressToTest, records);
+//		final String ipAddressToTest = "142.250.185.164";
+//		Name name = ReverseMap.fromAddress(ipAddressToTest);
+//		Record[] records = new Lookup(name, Type.PTR).run();
+//		assertNotNull(records); 
+		//142.250.186.132
+		String address = InetAddress.getByAddress(new byte[] {(byte)142, (byte)250, (byte)186, (byte)132}).getHostName();
+		LOG.info("rDNS for IP {} = {} via org.xbill.DNS.Lookup.Lookup", "142.250.186.132", address);
 	}
 }

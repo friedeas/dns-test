@@ -182,7 +182,6 @@ public class TestInetAddressResolver implements InetAddressResolver {
 	@Override
 	public String lookupByAddress(final byte[] addr) throws UnknownHostException {
 		Name name = ReverseMap.fromAddress(addr);
-//		Name name = ReverseMap.fromAddress(InetAddress.getByAddress(addr));	    
 		try {
 			LookupResult result = performLookup(name, Type.PTR);
 			if (result != null && result.getRecords() != null && !result.getRecords().isEmpty()) {
