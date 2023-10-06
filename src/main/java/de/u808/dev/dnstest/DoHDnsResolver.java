@@ -23,6 +23,8 @@ import okhttp3.dnsoverhttps.DnsOverHttps;
 
 public class DoHDnsResolver implements InetAddressResolver {
 
+	private static final String IP_4_ARPA_TEMPLATE = "%s.%s.%s.%s.in-addr.arpa.";
+
 	private static final String BASE_URL = " https://dns.google";
 
 	DnsOverHttps dns;
@@ -34,11 +36,8 @@ public class DoHDnsResolver implements InetAddressResolver {
 	private static Logger LOG = LoggerFactory.getLogger(DoHDnsResolver.class);
 
 	public DoHDnsResolver() {
-
 //		Security.insertProviderAt(new org.conscrypt.OpenSSLProvider(), 1);		
-		client = new OkHttpClient.Builder().proxy(new Proxy(Type.HTTP, new InetSocketAddress("127.0.0.1", 3128)))
-				.build();
-
+		client = new OkHttpClient.Builder().proxy(new Proxy(Type.HTTP, new InetSocketAddress("127.0.0.1", 3128))).build();
 		try {
 			dns = new DnsOverHttps.Builder().client(client).url(HttpUrl.get("https://dns.google/dns-query")).post(false)
 					.bootstrapDnsHosts(InetAddress.getByName("8.8.4.4"), InetAddress.getByName("8.8.8.8")).build();
@@ -54,20 +53,7 @@ public class DoHDnsResolver implements InetAddressResolver {
 
 	@Override
 	public String lookupByAddress(byte[] addr) throws UnknownHostException {
-		HttpUrl.Builder urlBuilder = HttpUrl.parse(BASE_URL + "/resolve").newBuilder();
-		if (addr.length == 4) {
-			urlBuilder.addQueryParameter("name", "%s.%s.%s.%s.in-addr.arpa.".formatted(addr[3] & 0xFF, addr[2] & 0xFF,
-					addr[1] & 0xFF, addr[0] & 0xFF));
-		} else if (addr.length == 16) {
-			urlBuilder.addQueryParameter("name",
-					"%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.ip6.arpa.".formatted(addr[15] & 0xFF, addr[14] & 0xFF, addr[13] & 0xFF,
-							addr[12] & 0xFF, addr[11] & 0xFF, addr[10] & 0xFF, addr[9] & 0xFF, addr[8] & 0xFF,
-							addr[7] & 0xFF, addr[6] & 0xFF, addr[5] & 0xFF, addr[4] & 0xFF, addr[3] & 0xFF,
-							addr[2] & 0xFF, addr[1] & 0xFF, addr[0] & 0xFF));
-		}
-		urlBuilder.addQueryParameter("type", "ptr");
-
-		String url = urlBuilder.build().toString();
+		String url = buildDoHRequestUrl(addr); 
 
 		Request request = new Request.Builder().url(url).build();
 		Call call = client.newCall(request);
@@ -84,4 +70,34 @@ public class DoHDnsResolver implements InetAddressResolver {
 		return null;
 	}
 
+	protected String buildDoHRequestUrl(byte[] addr) throws UnknownHostException {
+		HttpUrl.Builder urlBuilder = HttpUrl.parse(BASE_URL + "/resolve").newBuilder();
+		if (addr.length == 4) {
+			urlBuilder.addQueryParameter("name", getIp4NameParameter(addr));
+		} else if (addr.length == 16) {
+			urlBuilder.addQueryParameter("name", getIp6NameParameter(addr));
+		}
+		urlBuilder.addQueryParameter("type", "ptr");
+		return urlBuilder.build().toString();
+	}
+	
+	String getIp4NameParameter(byte[] addr){
+		return IP_4_ARPA_TEMPLATE.formatted(addr[3] & 0xFF, addr[2] & 0xFF,
+				addr[1] & 0xFF, addr[0] & 0xFF);
+	}
+	
+	String getIp6NameParameter(byte[] addr) throws UnknownHostException{
+		final InetAddress address = InetAddress.getByAddress(addr);					
+		final String[] okktets = address.toString().replaceAll("[/]", "").split(":");
+		StringBuffer sb = new StringBuffer();
+		for (String string : okktets) {
+			String formattedString = String.format("%1$" + 4 + "s", string).replace(' ', '0');
+			sb.append(formattedString);
+		}
+		String test = sb.reverse().toString();
+		StringBuffer urlStringBuffer = new StringBuffer();		
+		test.chars().forEach(s -> urlStringBuffer.append(Character.valueOf((char)s)+"."));			
+		urlStringBuffer.append("ip6.arpa");
+		return urlStringBuffer.toString();
+	}
 }

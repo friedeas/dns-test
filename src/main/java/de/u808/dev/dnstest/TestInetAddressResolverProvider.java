@@ -7,7 +7,6 @@ public class TestInetAddressResolverProvider extends InetAddressResolverProvider
 
 	@Override
 	public InetAddressResolver get(Configuration configuration) {
-		 //return new TestInetAddressResolver();
 		return new DoHDnsResolver();
 	}
 
